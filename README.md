@@ -1,0 +1,1 @@
+# STANKIN_Messanger_StanokInc_Frontend
