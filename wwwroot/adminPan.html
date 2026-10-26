@@ -1,0 +1,292 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Администрирование - СТАНКИН</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4a5a90',
+                        'primary-hover': '#3b4d96',
+                        'text-main': '#1f2937',
+                        'sidebar-bg': 'rgba(255, 255, 255, 0.4)',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
+            top: -100px; right: -100px;
+            border-radius: 50%; pointer-events: none; z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            bottom: -100px; left: -100px;
+            border-radius: 50%; pointer-events: none; z-index: 0;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+        input[type="checkbox"] {
+            accent-color: #4a5a90; width: 18px; height: 18px; cursor: pointer;
+        }
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            display: none;
+        }
+        .modal-overlay.visible { display: flex; }
+    </style>
+</head>
+<body class="font-sans min-h-screen relative overflow-hidden text-text-main
+             bg-[linear-gradient(135deg,#e0e7ff_0%,#f3e8ff_50%,#dbeafe_100%)]">
+
+<header class="relative z-10 glass-panel border-b border-white/50 px-6 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-4">
+        <img src="logo-stankin.png" alt="СТАНКИН" class="h-10 w-auto object-contain">
+        <h1 class="text-xl font-semibold text-primary">Администрирование</h1>
+    </div>
+    <div class="flex items-center gap-6 text-sm">
+        <span class="text-gray-600">Добро пожаловать, <strong>admin</strong></span>
+        <div class="flex gap-4 text-primary">
+            <a href="index.html" class="hover:underline text-red-500">Выйти</a>
+        </div>
+    </div>
+</header>
+
+<div class="relative z-10 flex h-[calc(100vh-60px)]">
+
+    <aside class="w-72 glass-panel border-r border-white/50 p-4 overflow-y-auto flex flex-col gap-6">
+
+        <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">Управление</h3>
+            <nav class="flex flex-col gap-1">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn active flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+                    <span>Главная</span>
+                </button>
+                <button onclick="switchTab('groups')" id="btn-groups" class="tab-btn flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+                    <span>Учебные группы</span>
+                </button>
+                <button onclick="switchTab('users')" id="btn-users" class="tab-btn flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left">
+                    <span>Преподаватели</span>
+                </button>
+            </nav>
+        </div>
+
+        <div>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2">Последние действия</h3>
+            <div id="recent-actions" class="flex flex-col gap-3 text-sm text-gray-600 px-2"></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto relative">
+
+        <!-- Дашборд -->
+        <div id="tab-dashboard" class="tab-content block">
+            <h2 class="text-2xl font-semibold mb-6">Панель управления</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel rounded-[18px] p-6">
+                    <p class="text-sm text-gray-500 mb-1">Всего студентов</p>
+                    <p class="text-3xl font-bold text-primary" id="stat-students">0</p>
+                </div>
+                <div class="glass-panel rounded-[18px] p-6">
+                    <p class="text-sm text-gray-500 mb-1">Учебных чатов</p>
+                    <p class="text-3xl font-bold text-primary" id="stat-groups">0</p>
+                </div>
+                <div class="glass-panel rounded-[18px] p-6">
+                    <p class="text-sm text-gray-500 mb-1">Преподавателей</p>
+                    <p class="text-3xl font-bold text-primary" id="stat-teachers">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Учебные группы -->
+        <div id="tab-groups" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold">Учебные группы</h2>
+                <div class="flex gap-2">
+                    <button id="importGroupBtn" class="bg-white/60 hover:bg-white text-primary px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-white/80 shadow-sm flex items-center gap-2">
+                        <span>ИМПОРТ ИЗ EXCEL</span> 
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[18px] p-4 mb-6 flex gap-4 items-center">
+                <div class="relative flex-1 max-w-md">
+                    <input type="text" id="group-search" placeholder="Поиск..."
+                           class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[18px] overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-white/40 text-xs text-gray-500 uppercase tracking-wider border-b border-white/50">
+                        <th class="p-4 font-medium w-12">
+                            <input type="checkbox" id="select-all-checkbox" class="rounded border-gray-300 text-primary focus:ring-primary">
+                        </th>
+                        <th class="p-4 font-medium">НАЗВАНИЕ</th>
+                        <th class="p-4 font-medium">СТУДЕНТОВ</th>
+                        <th class="p-4 font-medium">СОЗДАНА</th>
+                    </tr>
+                    </thead>
+                    <tbody class="text-sm" id="groups-table-body"></tbody>
+                </table>
+                <div class="p-4 text-xs text-gray-500 bg-white/20" id="groups-count">0 групп</div>
+            </div>
+        </div>
+
+        <!-- Редактирование группы -->
+        <div id="tab-edit-group" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold">Группа: <span id="edit-group-name" class="text-primary">—</span></h2>
+                <div class="flex gap-2">
+                    <button onclick="deleteCurrentGroup()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm">
+                        Удалить группу
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[18px] p-6 mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Название группы</label>
+                <input type="text" id="edit-group-input" value=""
+                       class="w-full max-w-md px-4 py-3 rounded-xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm">
+            </div>
+
+            <div class="glass-panel rounded-[18px] p-6">
+                <h3 class="text-lg font-semibold mb-4">Состав группы (Студенты)</h3>
+
+                <div class="border border-white/50 rounded-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-white/40 text-xs text-gray-500 uppercase tracking-wider border-b border-white/50">
+                            <th class="p-4 font-medium">ФИО</th>
+                            <th class="p-4 font-medium">ЛОГИН</th>
+                            <th class="p-4 font-medium">ПАРОЛЬ</th>
+                            <th class="p-4 font-medium text-right">ДЕЙСТВИЕ</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-sm" id="students-table-body"></tbody>
+                    </table>
+                    <div class="p-4 text-xs text-gray-500 bg-white/20" id="students-count">0 студентов</div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="saveAndReturn()" class="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    Вернуться к списку
+                </button>
+            </div>
+        </div>
+
+        <!-- Преподаватели -->
+        <div id="tab-users" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold">Преподаватели</h2>
+                <button id="addTeacherBtn" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+                    <span>ДОБАВИТЬ ПРЕПОДАВАТЕЛЯ</span>
+                    <span class="text-lg leading-none">+</span>
+                </button>
+            </div>
+
+            <div class="glass-panel rounded-[18px] p-4 mb-6 flex gap-4 items-center">
+                <div class="relative flex-1 max-w-md">
+                    <input type="text" id="teacher-search" placeholder="Поиск по ФИО или логину..."
+                           class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[18px] overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-white/40 text-xs text-gray-500 uppercase tracking-wider border-b border-white/50">
+                        <th class="p-4 font-medium">ФИО</th>
+                        <th class="p-4 font-medium">ЛОГИН</th>
+                        <th class="p-4 font-medium">КАФЕДРА</th>
+                        <th class="p-4 font-medium text-right">ДЕЙСТВИЕ</th>
+                    </tr>
+                    </thead>
+                    <tbody class="text-sm" id="teachers-table-body"></tbody>
+                </table>
+                <div class="p-4 text-xs text-gray-500 bg-white/20" id="teachers-count">0 преподавателей</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Модалка: импорт группы -->
+<div id="importGroupModal" class="modal-overlay fixed inset-0 z-50 items-center justify-center">
+    <div class="bg-white rounded-[18px] shadow-2xl max-w-md w-full mx-4 p-6 relative">
+        <button onclick="closeImportGroupModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-xl text-gray-500 hover:bg-gray-100">✕</button>
+        <h2 class="text-lg font-semibold mb-4">Импорт группы из Excel</h2>
+        <p class="text-sm text-gray-500 mb-4">
+            В демо-версии импорт из Excel не реализован. Используйте API
+            <code class="bg-gray-100 px-1 rounded">POST /api/admin/users</code> для создания студентов
+            или добавьте их через SQL.
+        </p>
+        <button onclick="closeImportGroupModal()" class="w-full py-3 rounded-xl text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors shadow-sm">
+            Понятно
+        </button>
+    </div>
+</div>
+
+<div id="addTeacherModal" class="modal-overlay fixed inset-0 z-50 items-center justify-center">
+    <div class="bg-white rounded-[18px] shadow-2xl max-w-md w-full mx-4 p-6 relative">
+        <button onclick="closeAddTeacherModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-xl text-gray-500 hover:bg-gray-100">✕</button>
+        <h2 class="text-lg font-semibold mb-4">Добавить преподавателя</h2>
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">ФИО</label>
+        <input id="teacherName" type="text" placeholder="Иванов Иван Иванович"
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary/50 mb-3">
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">Логин</label>
+        <input id="teacherLogin" type="text" placeholder="ivanov"
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary/50 mb-3">
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+        <input id="teacherPassword" type="text" placeholder="Например: 12345"
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary/50 mb-3">
+
+        <label class="block text-sm font-medium text-gray-700 mb-2">Кафедра (справочно)</label>
+        <input id="teacherDept" type="text" placeholder="Информационные системы"
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary/50 mb-3">
+
+        <p class="text-xs text-gray-500 mb-3">Если оставить поле пароля пустым — будет установлен пароль по умолчанию <strong>12345</strong>.</p>
+
+        <div id="addTeacherError" class="hidden mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"></div>
+
+        <button onclick="submitAddTeacher()" class="w-full py-3 rounded-xl text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors shadow-sm mt-2">
+            Добавить
+        </button>
+    </div>
+</div>
+
+<script src="adminPan.js"></script>
+
+</body>
+</html>

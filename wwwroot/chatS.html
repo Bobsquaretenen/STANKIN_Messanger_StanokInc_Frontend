@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger UI - Студент</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-body': '#f0f2f5',
+                        'bg-sidebar': '#ffffff',
+                        'bg-chat': '#f8f9fb',
+                        'header': '#e5e7eB',
+                        'primary-dark': '#0f172a',
+                        'text-main': '#1f2937',
+                        'text-muted': '#6b7280',
+                        'msg-own': '#64748b',
+                        'msg-other': '#ffffff',
+                        'primary': '#4a5a90',
+                        'primary-hover': '#3b4d96',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    borderRadius: { 'sm-base':'8px','md-base':'12px','lg-base':'18px','field':'12px' },
+                    boxShadow: {
+                        'app':'0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                        'bubble-other':'0 1px 2px rgba(1,1,1,0.5)',
+                        'btn':'0 4px 6px -1px rgba(74,90,144,0.3)',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); }
+        .bubble-text { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+        *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        *::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; -webkit-appearance: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .messages-appear { animation: fadeIn 0.25s ease-out; }
+
+        .chat-item-active::before {
+            content: ''; position: absolute; left: 0; top: 15px; bottom: 15px;
+            width: 4px; background-color: #e5e7eB; border-radius: 0 4px 4px 0;
+        }
+        .sidebar-hidden { width: 0 !important; min-width: 0 !important; overflow: hidden; border-right: none !important; opacity: 0; }
+        .sidebar-transition { transition: width 0.3s ease, opacity 0.3s ease, min-width 0.3s ease; }
+        .toggle-sidebar-btn { transition: transform 0.2s ease; }
+        .toggle-sidebar-btn:hover { transform: scale(1.1); }
+
+        .offline-banner { background: #ef4444; color: white; text-align: center; padding: 6px 12px; font-size: 13px; font-weight: 500; display: none; }
+        .offline-banner.visible { display: block; }
+
+        .modal-overlay { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); display: none; }
+        .modal-overlay.visible { display: flex; }
+    </style>
+</head>
+<body class="font-sans h-screen flex items-center justify-center text-text-main bg-body">
+
+<div class="absolute top-10 left-10 flex items-center z-10">
+    <img src="logo-stankin.png" alt="СТАНКИН" class="h-[50px] w-auto object-contain">
+</div>
+
+<div class="w-full max-w-[1200px] h-[90vh] bg-bg-chat flex flex-col
+                rounded-lg-base shadow-app overflow-hidden relative
+                border border-white/40 backdrop-blur-sm
+                max-md:h-screen max-md:rounded-none max-md:max-w-full">
+
+    <div id="offlineBanner" class="offline-banner">Нет соединения с интернетом</div>
+
+    <div class="flex-1 flex overflow-hidden min-h-0">
+
+        <aside id="sidebar" class="sidebar-transition w-72 bg-bg-sidebar flex flex-col border-r border-[#cbd5e1]
+                          transition-all duration-300 max-md:hidden shrink-0">
+
+            <div class="bg-header text-white p-5 flex items-center justify-between h-20 shrink-0">
+                <span class="text-lg font-bold tracking-wider text-[#1e293b]">ЧАТЫ</span>
+            </div>
+
+            <div class="px-5 py-[15px] bg-bg-sidebar shrink-0">
+                <div class="bg-[#f3f4f6] px-[15px] py-[10px] rounded-full flex items-center text-text-muted">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="search" name="search" placeholder="Поиск..."
+                           class="border-none bg-transparent outline-none ml-[10px] w-full text-sm">
+                </div>
+            </div>
+
+            <div class="flex-1 min-h-0 flex flex-col px-[10px]">
+                <div id="chatList" class="flex-1 min-h-0 overflow-y-auto pb-[10px]"></div>
+            </div>
+
+            <div class="h-[80px] bg-bg-sidebar shrink-0 border-t border-[#eaebec]"></div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-bg-chat relative shadow-[-1.5px_0_0_0_#cbd5e1] min-w-0">
+
+            <header class="h-20 bg-header flex items-center justify-between px-[25px]
+                               text-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-20 shrink-0">
+                <div class="flex items-center min-w-0">
+                    <button id="toggleSidebar" title="Скрыть/показать панель чатов"
+                            class="toggle-sidebar-btn w-[34px] h-[34px] rounded-full flex items-center justify-center
+                                       cursor-pointer text-xl mr-[15px] shrink-0
+                                       bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                       transition-[background,border-color,color] duration-200
+                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                        <i id="toggleIcon" class="ph ph-sidebar-simple"></i>
+                    </button>
+                    <div class="w-11 h-11 rounded-full flex items-center justify-center
+                                    bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                    mr-[15px] text-3xl shrink-0">
+                        <i class="ph ph-users-three"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div id="chatTitle" class="text-base font-semibold text-[#1e293b] truncate">—</div>
+                        <div id="chatSubtitle" class="text-xs text-[#475569] truncate"></div>
+                    </div>
+                </div>
+                <div id="chatActions" class="hidden gap-[10px] items-center shrink-0">
+                    <button id="videoBtn" title="Видеозвонок"
+                            class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                       text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                       transition-[background,border-color,color] duration-200
+                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                        <i class="ph ph-video-camera"></i>
+                    </button>
+                    <button id="infoBtn" title="Информация о группе"
+                            class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                       text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                       transition-[background,border-color,color] duration-200
+                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                        <i class="ph ph-info"></i>
+                    </button>
+                    <a href="index.html" title="Выйти из аккаунта"
+                       class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                  text-xl no-underline ml-[5px]
+                                  bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                  transition-[background,border-color,color] duration-200
+                                  hover:bg-white/90 hover:border-[#ef4444] hover:text-[#ef4444]
+                                  [&:hover_i]:!text-[#ef4444]">
+                        <i class="ph ph-sign-out"></i>
+                    </a>
+                </div>
+            </header>
+
+            <div id="messagesArea" class="flex-1 p-[25px] overflow-y-auto flex flex-col gap-5
+                         bg-[radial-gradient(circle_at_10%_20%,rgba(30,41,59,0.03)_0%,transparent_20%),radial-gradient(circle_at_90%_80%,rgba(30,41,59,0.03)_0%,transparent_20%)]">
+            </div>
+
+            <footer id="chatFooter" class="hidden px-[25px] py-[15px] bg-bg-sidebar items-end gap-[15px] border-t border-[#eaebec] shrink-0">
+                <div class="flex gap-[10px] text-text-muted pb-[6px]">
+                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                       text-2xl bg-transparent text-text-muted
+                                       transition-[background,color] duration-200
+                                       hover:text-primary-dark hover:bg-[#f3f4f6]">
+                        <i class="ph ph-paperclip"></i>
+                    </button>
+                </div>
+                <div class="flex-1 relative">
+                        <textarea id="message" name="message" placeholder="Сообщение" rows="1"
+                                  class="w-full px-[15px] py-3 rounded-3xl border-none bg-[#f3f4f6]
+                                         text-sm outline-none transition-colors duration-200
+                                         focus:bg-[#e5e7eb] resize-none overflow-y-auto
+                                         max-h-[140px]"
+                                  style="line-height: 1.4;"></textarea>
+                </div>
+                <div class="flex gap-[10px] text-text-muted pb-[6px]">
+                    <button id="sendBtn" class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                       text-[28px] text-primary-dark bg-transparent
+                                       transition-transform duration-200 hover:scale-110">
+                        <i class="ph-fill ph-paper-plane-right"></i>
+                    </button>
+                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                       text-2xl bg-transparent text-text-muted
+                                       transition-[background,color] duration-200
+                                       hover:text-primary-dark hover:bg-[#f3f4f6]">
+                        <i class="ph ph-microphone"></i>
+                    </button>
+                </div>
+            </footer>
+
+            <footer id="chatFooterLocked" class="hidden px-[25px] py-[26px] bg-bg-sidebar items-center justify-center
+                               border-t border-[#eaebec] shrink-0">
+                <div class="flex items-center gap-2 text-[15px] text-text-muted text-center select-none">
+                    <i class="ph ph-lock-key text-lg"></i>
+                    <span>Отправка сообщений запрещена преподавателем</span>
+                </div>
+            </footer>
+
+            <footer id="chatFooterEmpty" class="px-[25px] py-[26px] bg-bg-sidebar flex items-center justify-center
+                               border-t border-[#eaebec] shrink-0">
+                <div class="flex items-center gap-2 text-[15px] text-text-muted text-center select-none">
+                    <i class="ph ph-chats-circle text-lg"></i>
+                    <span>Выберите группу</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <div id="infoModal" class="modal-overlay absolute inset-0 z-50 items-center justify-center">
+        <div class="bg-white rounded-lg-base shadow-app max-w-md w-full mx-4 p-6 relative">
+            <button id="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
+                                              text-xl text-text-muted hover:bg-[#f3f4f6]">
+                <i class="ph ph-x"></i>
+            </button>
+            <h2 class="text-lg font-semibold text-text-main mb-4">О группе</h2>
+            <div class="text-sm text-text-muted space-y-2">
+                <p><span class="font-medium text-text-main">Название:</span> <span id="modalChatName">—</span></p>
+                <p><span class="font-medium text-text-main">Участников:</span> <span id="modalMembers">—</span></p>
+                <p><span class="font-medium text-text-main">Отправка сообщений:</span> <span id="modalAccess">—</span></p>
+            </div>
+            <button id="closeModalBtn" class="flex items-center justify-center w-full py-4 px-5 mt-[15px]
+                                 rounded-field text-base font-medium font-sans text-white
+                                 bg-primary shadow-btn no-underline
+                                 transition-[background,transform] duration-200
+                                 hover:bg-primary-hover hover:-translate-y-px
+                                 active:translate-y-0">
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="chatS.js"></script>
+
+</body>
+</html>
