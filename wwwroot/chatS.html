@@ -60,6 +60,15 @@
 
         .modal-overlay { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); display: none; }
         .modal-overlay.visible { display: flex; }
+
+        /* Стили для всплывающих уведомлений (Toast) */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out forwards; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        .toast-hide { animation: slideOut 0.3s ease-in forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
     </style>
 </head>
 <body class="font-sans h-screen flex items-center justify-center text-text-main bg-body">
@@ -125,24 +134,28 @@
                         </div>
                     </div>
                 </div>
-                <div id="chatActions" class="hidden gap-[10px] items-center shrink-0">
-                    <button id="videoBtn" title="Видеозвонок"
-                            class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
-                                       text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
-                                       transition-[background,border-color,color] duration-200
-                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
-                        <i class="ph ph-video-camera"></i>
-                    </button>
-                    <button id="infoBtn" title="Информация о группе"
-                            class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
-                                       text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
-                                       transition-[background,border-color,color] duration-200
-                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
-                        <i class="ph ph-info"></i>
-                    </button>
+                
+                <div class="flex items-center gap-[10px] shrink-0">
+                    <div id="chatActions" class="hidden gap-[10px] items-center shrink-0">
+                        <button id="videoBtn" title="Видеозвонок"
+                                class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                           text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                           transition-[background,border-color,color] duration-200
+                                           hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                            <i class="ph ph-video-camera"></i>
+                        </button>
+                        <button id="infoBtn" title="Информация о группе"
+                                class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                           text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                           transition-[background,border-color,color] duration-200
+                                           hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                            <i class="ph ph-info"></i>
+                        </button>
+                    </div>
+                    
                     <a href="index.html" title="Выйти из аккаунта"
                        class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
-                                  text-xl no-underline ml-[5px]
+                                  text-xl no-underline
                                   bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
                                   transition-[background,border-color,color] duration-200
                                   hover:bg-white/90 hover:border-[#ef4444] hover:text-[#ef4444]
@@ -158,7 +171,8 @@
 
             <footer id="chatFooter" class="hidden px-[25px] py-[15px] bg-bg-sidebar items-end gap-[15px] border-t border-[#eaebec] shrink-0">
                 <div class="flex gap-[10px] text-text-muted pb-[6px]">
-                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                    <!-- ДОБАВЛЕН ID attachBtn -->
+                    <button id="attachBtn" class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
                                        text-2xl bg-transparent text-text-muted
                                        transition-[background,color] duration-200
                                        hover:text-primary-dark hover:bg-[#f3f4f6]">
@@ -179,7 +193,8 @@
                                        transition-transform duration-200 hover:scale-110">
                         <i class="ph-fill ph-paper-plane-right"></i>
                     </button>
-                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                    <!-- ДОБАВЛЕН ID voiceBtn -->
+                    <button id="voiceBtn" class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
                                        text-2xl bg-transparent text-text-muted
                                        transition-[background,color] duration-200
                                        hover:text-primary-dark hover:bg-[#f3f4f6]">
@@ -230,8 +245,7 @@
     </div>
 </div>
 
-<script src="js/shared.js"></script>
-<script src="js/chatS.js"></script>
+<script type="module" src="js/chatS.js"></script>
 
 </body>
 </html>

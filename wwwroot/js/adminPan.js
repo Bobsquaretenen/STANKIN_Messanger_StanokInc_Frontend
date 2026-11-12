@@ -14,6 +14,23 @@
     let currentGroupName = null;
     let recentActions = [];
 
+    function showToast(message, type = 'info') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     // ---------- Утилиты ----------
     function plural(n, one, few, many) {
         const m10 = n % 10, m100 = n % 100;
@@ -516,7 +533,7 @@
     // ---------- Импорт группы ----------
     window.closeImportGroupModal = () => $('#importGroupModal').classList.remove('visible');
     window.submitImportGroup = () => {
-        alert('Импорт из Excel в демо-версии не реализован. Добавьте студентов через API /api/admin/users.');
+        showToast('Импорт из Excel в демо-версии не реализован. Используйте API.', 'info');
         $('#importGroupModal').classList.remove('visible');
     };
     if ($('#importGroupBtn')) {

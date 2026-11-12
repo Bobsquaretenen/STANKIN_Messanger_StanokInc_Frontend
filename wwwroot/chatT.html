@@ -82,6 +82,15 @@
         .pick-row input[type="checkbox"] {
             width: 18px; height: 18px; accent-color: #4a5a90; cursor: pointer; flex-shrink: 0;
         }
+
+        /* Стили для всплывающих уведомлений (Toast) */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out forwards; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        .toast-hide { animation: slideOut 0.3s ease-in forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
     </style>
 </head>
 <body class="font-sans h-screen flex items-center justify-center text-text-main bg-body">
@@ -157,71 +166,74 @@
                         </div>
                     </div>
                 </div>
-                <div id="chatActions" class="hidden gap-[10px] items-center shrink-0">
-                    <button id="videoBtn" title="Видеозвонок"
-                            class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
-                                       text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
-                                       transition-[background,border-color,color] duration-200
-                                       hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
-                        <i class="ph ph-video-camera"></i>
-                    </button>
-
-                    <div class="relative" id="settingsWrap">
-                        <button id="settingsBtn" title="Настройки группы"
+                
+                <div class="flex items-center gap-[10px] shrink-0">
+                    <div id="chatActions" class="hidden gap-[10px] items-center shrink-0">
+                        <button id="videoBtn" title="Видеозвонок"
                                 class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
                                            text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
                                            transition-[background,border-color,color] duration-200
                                            hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
-                            <i class="ph ph-dots-three-vertical"></i>
+                            <i class="ph ph-video-camera"></i>
                         </button>
 
-                        <div id="settingsMenu"
-                             class="hidden absolute right-0 top-[44px] w-[320px]
-                                        bg-white rounded-md-base shadow-app border border-[#e5e7eb]
-                                        p-3 z-30">
+                        <div class="relative" id="settingsWrap">
+                            <button id="settingsBtn" title="Настройки группы"
+                                    class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                                               text-xl bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
+                                               transition-[background,border-color,color] duration-200
+                                               hover:bg-white/90 hover:border-[#1e293b] hover:text-[#0f172a]">
+                                <i class="ph ph-dots-three-vertical"></i>
+                            </button>
 
-                            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">Настройки группы</div>
+                            <div id="settingsMenu"
+                                 class="hidden absolute right-0 top-[44px] w-[320px]
+                                            bg-white rounded-md-base shadow-app border border-[#e5e7eb]
+                                            p-3 z-30">
 
-                            <div class="px-1 mb-2">
-                                <div class="flex items-center justify-between gap-4">
-                                    <span class="text-sm font-medium text-gray-700 leading-snug">Отправка сообщений студентами</span>
-                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                                        <input type="checkbox" id="accessToggle" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none
-                                                        rounded-full peer peer-checked:after:translate-x-full
-                                                        peer-checked:after:border-white
-                                                        after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-                                                        after:bg-white after:border-gray-300 after:border
-                                                        after:rounded-full after:h-5 after:w-5 after:transition-all
-                                                        peer-checked:bg-primary"></div>
-                                    </label>
+                                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">Настройки группы</div>
+
+                                <div class="px-1 mb-2">
+                                    <div class="flex items-center justify-between gap-4">
+                                        <span class="text-sm font-medium text-gray-700 leading-snug">Отправка сообщений студентами</span>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" id="accessToggle" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none
+                                                            rounded-full peer peer-checked:after:translate-x-full
+                                                            peer-checked:after:border-white
+                                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                                            after:bg-white after:border-gray-300 after:border
+                                                            after:rounded-full after:h-5 after:w-5 after:transition-all
+                                                            peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1" id="accessLabel">Студенты могут отправлять сообщения</p>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1" id="accessLabel">Студенты могут отправлять сообщения</p>
+
+                                <div class="border-t border-[#eef0f3] my-2"></div>
+
+                                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">Действия</div>
+
+                                <button id="addStudentsFromGroupsBtn" class="menu-item" type="button">
+                                    <i class="ph ph-student"></i>
+                                    <span>Добавить студентов из учебных групп</span>
+                                </button>
+
+                                <button id="addGroupBtn" class="menu-item" type="button">
+                                    <i class="ph ph-plus-circle"></i>
+                                    <span>Создать новый чат</span>
+                                </button>
+                                <button id="menuInfoBtn" class="menu-item" type="button">
+                                    <i class="ph ph-info"></i>
+                                    <span>Информация о чате</span>
+                                </button>
                             </div>
-
-                            <div class="border-t border-[#eef0f3] my-2"></div>
-
-                            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">Действия</div>
-
-                            <button id="addStudentsFromGroupsBtn" class="menu-item" type="button">
-                                <i class="ph ph-student"></i>
-                                <span>Добавить студентов из учебных групп</span>
-                            </button>
-
-                            <button id="addGroupBtn" class="menu-item" type="button">
-                                <i class="ph ph-plus-circle"></i>
-                                <span>Создать новый чат</span>
-                            </button>
-                            <button id="menuInfoBtn" class="menu-item" type="button">
-                                <i class="ph ph-info"></i>
-                                <span>Информация о чате</span>
-                            </button>
                         </div>
                     </div>
-
+                    
                     <a href="index.html" title="Выйти из аккаунта"
                        class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
-                                  text-xl no-underline ml-[5px]
+                                  text-xl no-underline
                                   bg-white/60 border border-[rgba(30,41,59,0.15)] text-[#1e293b]
                                   transition-[background,border-color,color] duration-200
                                   hover:bg-white/90 hover:border-[#ef4444] hover:text-[#ef4444]
@@ -237,7 +249,8 @@
 
             <footer id="chatFooter" class="hidden px-[25px] py-[15px] bg-bg-sidebar items-end gap-[15px] border-t border-[#eaebec] shrink-0">
                 <div class="flex gap-[10px] text-text-muted pb-[6px]">
-                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                    <!-- ДОБАВЛЕН ID attachBtn -->
+                    <button id="attachBtn" class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
                                        text-2xl bg-transparent text-text-muted
                                        transition-[background,color] duration-200
                                        hover:text-primary-dark hover:bg-[#f3f4f6]">
@@ -258,7 +271,8 @@
                                        transition-transform duration-200 hover:scale-110">
                         <i class="ph-fill ph-paper-plane-right"></i>
                     </button>
-                    <button class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
+                    <!-- ДОБАВЛЕН ID voiceBtn -->
+                    <button id="voiceBtn" class="w-[34px] h-[34px] rounded-full flex items-center justify-center cursor-pointer
                                        text-2xl bg-transparent text-text-muted
                                        transition-[background,color] duration-200
                                        hover:text-primary-dark hover:bg-[#f3f4f6]">
@@ -277,6 +291,7 @@
         </main>
     </div>
 
+    <!-- Info modal -->
     <div id="infoModal" class="modal-overlay absolute inset-0 z-50 items-center justify-center">
         <div class="bg-white rounded-lg-base shadow-app max-w-md w-full mx-4 p-6 relative">
             <button id="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
@@ -301,6 +316,7 @@
         </div>
     </div>
 
+    <!-- Create chat modal -->
     <div id="createModal" class="modal-overlay absolute inset-0 z-50 items-center justify-center">
         <div class="bg-white rounded-lg-base shadow-app max-w-lg w-full mx-4 p-6 relative max-h-[90vh] overflow-y-auto">
             <button id="closeCreateModal" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
@@ -358,6 +374,7 @@
         </div>
     </div>
 
+    <!-- Add groups to existing chat modal -->
     <div id="addGroupsModal" class="modal-overlay absolute inset-0 z-50 items-center justify-center">
         <div class="bg-white rounded-lg-base shadow-app max-w-lg w-full mx-4 p-6 relative max-h-[90vh] overflow-y-auto">
             <button id="closeAddGroupsModal" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
@@ -397,8 +414,7 @@
     </div>
 </div>
 
-<script src="js/shared.js"></script>
-<script src="js/chatT.js"></script>
+<script type="module" src="js/chatT.js"></script>
 
 </body>
 </html>

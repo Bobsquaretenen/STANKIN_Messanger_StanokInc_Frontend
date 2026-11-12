@@ -44,7 +44,19 @@
     <img src="assets/logo-stankin.png" alt="СТАНКИН" class="h-[50px] w-auto object-contain">
 </div>
 
-<div class="bg-white/70 backdrop-blur-md border border-white/80 rounded-[18px]
+<div id="auth-status" class="hidden bg-white/70 backdrop-blur-md border border-white/80 rounded-[18px] p-6 w-full max-w-[420px] shadow-lg flex-col items-center relative z-[5] text-center">
+    <i class="ph ph-user-circle text-5xl text-primary mb-3"></i>
+    <p class="text-text-main mb-4">Вы вошли как <br> <strong id="auth-name" class="text-primary text-lg"></strong></p>
+    
+    <button onclick="goToCabinet()" class="w-full py-3 rounded-xl text-sm font-medium text-white bg-primary hover:bg-primary-hover transition-colors shadow-sm mb-3">
+        Перейти в мессенджер
+    </button>
+    <button onclick="logout()" class="w-full py-3 rounded-xl text-sm font-medium text-red-500 bg-white border border-gray-200 hover:bg-red-50 transition-colors shadow-sm">
+        Выйти из аккаунта
+    </button>
+</div>
+
+<div id="login-options" class="bg-white/70 backdrop-blur-md border border-white/80 rounded-[18px]
                 px-[60px] py-[50px] w-full max-w-[420px]
                 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.05)]
                 flex flex-col items-center relative z-[5]">
@@ -103,11 +115,27 @@
 </div>
 
 <script>
-    const u = JSON.parse(localStorage.getItem('currentUser') || 'null');
-    if (u) {
-        if (u.role === 'admin')        location.href = 'adminPan.html';
-        else if (u.role === 'teacher') location.href = 'chatT.html';
-        else                           location.href = 'chatS.html';
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    
+    if (currentUser) {
+        document.getElementById('login-options').classList.add('hidden');
+        const statusBlock = document.getElementById('auth-status');
+        statusBlock.classList.remove('hidden');
+        statusBlock.classList.add('flex');
+        
+        document.getElementById('auth-name').textContent = currentUser.fullName || currentUser.login;
+    }
+
+    function goToCabinet() {
+        if (currentUser.role === 'admin')        location.href = 'adminPan.html';
+        else if (currentUser.role === 'teacher') location.href = 'chatT.html';
+        else                                     location.href = 'chatS.html';
+    }
+
+    function logout() {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('activeChatId');
+        location.reload();
     }
 </script>
 </body>
